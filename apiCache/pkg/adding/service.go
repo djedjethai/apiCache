@@ -3,7 +3,6 @@ package adding
 import (
 	"errors"
 	"fmt"
-	"github.com/djedjethai/apiCache/pkg/storage"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
 )
 
@@ -35,13 +34,7 @@ func NewService(rdb RepoDb) service {
 func (s *service) AddBeerS(beer Beer) (string, error) {
 	var beerForDb database.Beer
 
-	// make the id, a bullshit one could be....
-	id, err := storage.GetId(beerC)
-	if err != nil {
-		return "", err
-	}
-
-	beerForDb.ID = id
+	beerForDb.ID = ""
 	beerForDb.Name = beer.Name
 	beerForDb.Brewery = beer.Brewery
 	beerForDb.Abv = beer.Abv
@@ -55,9 +48,7 @@ func (s *service) AddBeerS(beer Beer) (string, error) {
 	}
 
 	// delete cache
-
 	return str, nil
-
 }
 
 func (s *service) AddBeerSampleS(beers []Beer) error {

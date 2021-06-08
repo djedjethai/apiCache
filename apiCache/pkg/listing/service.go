@@ -32,13 +32,17 @@ func (s *service) GetBeersS() ([]Beer, error) {
 		return beers, err
 	}
 
-	for i, bdb := range beersDb {
-		beers[i].ID = bdb.ID
-		beers[i].Name = bdb.Name
-		beers[i].Brewery = bdb.Brewery
-		beers[i].Abv = bdb.Abv
-		beers[i].ShortDesc = bdb.ShortDesc
-		beers[i].Created = bdb.Created
+	for i := range beersDb {
+		b := Beer{
+			ID:        beersDb[i].ID,
+			Name:      beersDb[i].Name,
+			Brewery:   beersDb[i].Brewery,
+			Abv:       beersDb[i].Abv,
+			ShortDesc: beersDb[i].ShortDesc,
+			Created:   beersDb[i].Created,
+		}
+
+		beers = append(beers, b)
 	}
 
 	return beers, nil
