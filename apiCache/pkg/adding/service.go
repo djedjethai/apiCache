@@ -2,8 +2,8 @@ package adding
 
 import (
 	"errors"
-	"fmt"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
+	"time"
 )
 
 var ErrDuplicate = errors.New("Beer already exist")
@@ -27,7 +27,7 @@ type service struct {
 	rdb RepoDb
 }
 
-func NewService(rdb RepoDb) service {
+func NewService(rdb RepoDb) Service {
 	return &service{rdb}
 }
 
@@ -42,7 +42,7 @@ func (s *service) AddBeerS(beer Beer) (string, error) {
 	beerForDb.Created = time.Now()
 
 	// question is how to get the id back from db in a single req
-	str, err := s.sdb.AddBeer(beerForDb)
+	str, err := s.rdb.AddBeer(beerForDb)
 	if err != nil {
 		return "", err
 	}
@@ -53,10 +53,6 @@ func (s *service) AddBeerS(beer Beer) (string, error) {
 
 func (s *service) AddBeerSampleS(beers []Beer) error {
 	for i := range beers {
-		if i == nil {
-			return ErrInput
-		}
-
 		_, err := s.AddBeerS(beers[i])
 		if err != nil {
 			return err

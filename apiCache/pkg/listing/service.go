@@ -2,7 +2,7 @@ package listing
 
 import (
 	"errors"
-	"fmt"
+	// "fmt"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
 )
 
@@ -20,7 +20,7 @@ type service struct {
 	rdb RepoDb
 }
 
-func NewService(rdb RepoDb) service {
+func NewService(rdb RepoDb) Service {
 	return &service{rdb}
 }
 

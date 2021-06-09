@@ -1,0 +1,38 @@
+version: "2.4"
+
+services:
+  goapp:
+    build:
+      context: ./apiCache
+    ports:
+    - "8080:8080"  
+    networks:
+    - app-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+  mysql:
+    image: mysql:5.6.40
+    #restart: always
+    environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_DATABASE=goapi
+    - MYSQL_USER=root
+    - MYSQL_PASSWORD=root
+    ports:
+    - "3306:3306"
+    volumes:
+    - mysql-db:/var/lib/mysql
+    healthcheck:
+      test: "/etc/init.d/mysql status"
+      interval: 1s
+      retries: 120
+    networks:
+    - app-network
+                   
+volumes: 
+      mysql-db:
+
+networks:
+  app-network:
+    driver: bridge
