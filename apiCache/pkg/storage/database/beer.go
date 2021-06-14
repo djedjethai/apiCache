@@ -6,7 +6,7 @@ import (
 
 // Beer defines the properties of a beer to be listed
 type Beer struct {
-	ID        string
+	ID        int
 	Name      string
 	Brewery   string
 	Abv       float32

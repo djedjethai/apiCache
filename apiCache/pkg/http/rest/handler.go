@@ -12,9 +12,16 @@ func Handler(a adding.Service, l listing.Service) http.Handler {
 	router := httprouter.New()
 
 	router.GET("/beers", GetAllBeersR(l))
+	router.GET("/beer/:id", GetBeerR(l))
 	router.POST("/beer", PostBeerR(a))
 
 	return router
+}
+
+func GetBeerR(l listing.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		w.Header().Set("Content-Type", "application/json")
+	}
 }
 
 func GetAllBeersR(l listing.Service) func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

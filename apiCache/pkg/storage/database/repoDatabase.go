@@ -22,7 +22,7 @@ type Storage struct {
 }
 
 // func dsn() string {
-// 	return fmt.Sprintf("%s:%s@TCP(%s)/%s?charset=utf8", username, password, hostname, database)
+// 	return fmt.Sprintf("%s:%s@TCP(%s)/%s?parseTime=true", username, password, hostname, database)
 // }
 
 func NewStorage() (*Storage, error) {
@@ -31,7 +31,7 @@ func NewStorage() (*Storage, error) {
 	s := new(Storage)
 
 	// s.db, err = sql.Open("mysql", dsn())
-	s.db, err = sql.Open("mysql", "root:root@tcp(mysql:3306)/apiCache?charset=utf8")
+	s.db, err = sql.Open("mysql", "root:root@tcp(mysql:3306)/apiCache?parseTime=true")
 
 	fmt.Println(err)
 	// defer s.db.Close() // if on, close the connection
@@ -108,7 +108,7 @@ func (s *Storage) GetBeers() ([]Beer, error) {
 	var beers []Beer
 	fmt.Println("GetBeers func in db triggered, ras")
 
-	results, err := s.db.Query("SELECT beer_name, beer_brewery FROM beer")
+	results, err := s.db.Query("SELECT beer_id, beer_name, beer_brewery, beer_abv, beer_shortdesc, created_at FROM beer")
 	if err != nil {
 		fmt.Println("allllooo")
 		return beers, err
@@ -117,7 +117,14 @@ func (s *Storage) GetBeers() ([]Beer, error) {
 	fmt.Printf("beers bf scan %v", results)
 	for results.Next() {
 		var b Beer
-		err := results.Scan(&b.Name, &b.Brewery)
+		err := results.Scan(
+			&b.ID,
+			&b.Name,
+			&b.Brewery,
+			&b.Abv,
+			&b.ShortDesc,
+			&b.Created,
+		)
 		fmt.Printf("beeer: %v", b)
 		if err != nil {
 			return beers, err

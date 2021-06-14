@@ -34,7 +34,8 @@ func NewService(rdb RepoDb) Service {
 func (s *service) AddBeerS(beer Beer) (string, error) {
 	var beerForDb database.Beer
 
-	beerForDb.ID = ""
+	// what ever id, it won't be send to db
+	beerForDb.ID = 0
 	beerForDb.Name = beer.Name
 	beerForDb.Brewery = beer.Brewery
 	beerForDb.Abv = beer.Abv
