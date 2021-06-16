@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/djedjethai/apiCache/pkg/updating"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"strconv"
@@ -110,7 +111,7 @@ func (s *Storage) GetBeers() ([]Beer, error) {
 
 	results, err := s.db.Query("SELECT beer_id, beer_name, beer_brewery, beer_abv, beer_shortdesc, created_at FROM beer")
 	if err != nil {
-		fmt.Println("allllooo")
+		// fmt.Println("allllooo")
 		return beers, err
 	}
 
@@ -134,4 +135,40 @@ func (s *Storage) GetBeers() ([]Beer, error) {
 	}
 
 	return beers, nil
+}
+
+func (s *Storage) GetBeer(bid int) (Beer, error) {
+	var b Beer
+
+	err := s.db.QueryRow("SELECT beer_id, beer_name, beer_brewery, beer_abv, beer_shortdesc, created_at FROM beer WHERE beer_id = ?", bid).Scan(
+		&b.ID,
+		&b.Name,
+		&b.Brewery,
+		&b.Abv,
+		&b.ShortDesc,
+		&b.Created,
+	)
+	if err != nil {
+		fmt.Printf("grrr: %v", err)
+		return b, err
+	}
+
+	return b, nil
+
+}
+
+func (s Storage) BeerUpdate(b Beer) error {
+
+	if err := s.GetBeer(b.ID); err != nil {
+		return updating.ErrNotFound
+	}
+
+	sqlStmt := `UPDATE beer SET beer_name=$1, beer_brewery=$2, beer_abv=$3, beer_shortdesc=$4, created_at=$5 WHERE beer_id=$6 `
+
+	_, err := s.db.Exec(sqlStmt, b.Name, b.Brewery, b.Abv, b.ShortDesc, b.Created, b.ID)
+	if err != nil {
+		return updating.ErrServer
+	}
+
+	return nil
 }
