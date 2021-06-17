@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/djedjethai/apiCache/pkg/adding"
+	"github.com/djedjethai/apiCache/pkg/deleting"
 	"github.com/djedjethai/apiCache/pkg/http/rest"
 	"github.com/djedjethai/apiCache/pkg/listing"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
@@ -15,14 +16,16 @@ func main() {
 	var adder adding.Service
 	var lister listing.Service
 	var updater updating.Service
+	var deleter deleting.Service
 
 	db, _ := database.NewStorage()
 
 	adder = adding.NewService(db)
 	lister = listing.NewService(db)
 	updater = updating.NewService(db)
+	deleter = deleting.NewService(db)
 
-	router := rest.Handler(adder, lister, updater)
+	router := rest.Handler(adder, lister, updater, deleter)
 
 	fmt.Println("the server is listening on port: 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))

@@ -3,7 +3,6 @@ package updating
 import (
 	"errors"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
-	"strconv"
 	"time"
 )
 
@@ -11,25 +10,31 @@ var ErrServer = errors.New("Error during update")
 var ErrNotFound = errors.New("Error not found")
 
 type Service interface {
-	BeerUpdateS(int, Beer) error
+	BeerUpdateS(Beer) error
 }
 
-type repoDB interface {
-	BeerUpdateR(database.Beer) error
+type RepoDb interface {
+	BeerUpdate(database.Beer) error
+	GetBeer(int) (database.Beer, error)
 }
 
 type service struct {
 	rdb RepoDb
 }
 
-func NewService(r RepoDb) Service {
-	return &service{r}
+func NewService(rdb RepoDb) Service {
+	return &service{rdb}
 }
 
-func (s *service) BeerUpdateS(beer) error {
+func (s *service) BeerUpdateS(beer Beer) error {
 	var b database.Beer
 
-	b.ID = strconv.Atoi(beer.ID)
+	_, err := s.rdb.GetBeer(beer.ID)
+	if err != nil {
+		return err
+	}
+
+	b.ID = beer.ID
 	b.Name = beer.Name
 	b.Brewery = beer.Brewery
 	b.Abv = beer.Abv

@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"github.com/djedjethai/apiCache/pkg/adding"
+	"github.com/djedjethai/apiCache/pkg/deleting"
 	"github.com/djedjethai/apiCache/pkg/listing"
 	"github.com/djedjethai/apiCache/pkg/updating"
 	"github.com/julienschmidt/httprouter"
@@ -10,15 +11,34 @@ import (
 	"strconv"
 )
 
-func Handler(a adding.Service, l listing.Service, u updating.Service) http.Handler {
+func Handler(a adding.Service, l listing.Service, u updating.Service, d deleting.Service) http.Handler {
 	router := httprouter.New()
 
 	router.GET("/beers", GetAllBeersR(l))
 	router.GET("/beer/:id", GetBeerR(l))
 	router.POST("/beer", PostBeerR(a))
-	router.POST("/:id/update", PostBeerUpdateR(u))
+	router.POST("/beer/update", PostBeerUpdateR(u))
+	router.DELETE("/beer/:id", DeleteBeerR(d))
 
 	return router
+}
+
+func DeleteBeerR(d deleting.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		beerId, err := strconv(p.ByName("id"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := d.BeerDeleteS(beerId); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode("Beer deleted")
+	}
 }
 
 func GetBeerR(l listing.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -67,8 +87,20 @@ func PostBeerR(a adding.Service) func(w http.ResponseWriter, r *http.Request, _ 
 	}
 }
 
-func PostBeerUpdateR(a adding.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func PostBeerUpdateR(u updating.Service) func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		var beer updating.Beer
+		decoder := json.NewDecoder(r.Body)
 
+		if err := decoder.Decode(&beer); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		if err := u.BeerUpdateS(beer); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode("Beer updated")
 	}
 }

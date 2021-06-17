@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/djedjethai/apiCache/pkg/updating"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"strconv"
@@ -159,16 +158,23 @@ func (s *Storage) GetBeer(bid int) (Beer, error) {
 
 func (s Storage) BeerUpdate(b Beer) error {
 
-	if err := s.GetBeer(b.ID); err != nil {
-		return updating.ErrNotFound
-	}
-
-	sqlStmt := `UPDATE beer SET beer_name=$1, beer_brewery=$2, beer_abv=$3, beer_shortdesc=$4, created_at=$5 WHERE beer_id=$6 `
-
-	_, err := s.db.Exec(sqlStmt, b.Name, b.Brewery, b.Abv, b.ShortDesc, b.Created, b.ID)
+	stmt, err := s.db.Prepare("UPDATE beer SET beer_name=?, beer_brewery=?, beer_abv=?, beer_shortdesc=?, created_at=? WHERE beer_id=?")
 	if err != nil {
-		return updating.ErrServer
+		return err
 	}
+
+	stmt.Exec(b.Name, b.Brewery, b.Abv, b.ShortDesc, b.Created, b.ID)
+
+	return nil
+}
+
+func (s Storage) BeerDelete(id int) error {
+	delBeer, err := s.db.Prepare("DELETE FROM beer WHERE beer_id=?")
+	if err != nil {
+		return err
+	}
+
+	delBeer.Exec(id)
 
 	return nil
 }
