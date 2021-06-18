@@ -25,7 +25,7 @@ func Handler(a adding.Service, l listing.Service, u updating.Service, d deleting
 
 func DeleteBeerR(d deleting.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		beerId, err := strconv(p.ByName("id"))
+		beerId, err := strconv.Atoi(p.ByName("id"))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

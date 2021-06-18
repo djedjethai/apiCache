@@ -10,7 +10,7 @@ type Service interface {
 
 type RepoDb interface {
 	BeerDelete(int) error
-	GetBeer(database.Beer) error
+	GetBeer(int) (database.Beer, error)
 }
 
 type service struct {
@@ -27,5 +27,5 @@ func (s *service) BeerDeleteS(id int) error {
 		return err
 	}
 
-	return BeerDelete(beerFromDB.ID)
+	return s.rdb.BeerDelete(beerFromDB.ID)
 }
