@@ -6,6 +6,7 @@ import (
 	"github.com/djedjethai/apiCache/pkg/deleting"
 	"github.com/djedjethai/apiCache/pkg/http/rest"
 	"github.com/djedjethai/apiCache/pkg/listing"
+	"github.com/djedjethai/apiCache/pkg/storage/cache"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
 	"github.com/djedjethai/apiCache/pkg/updating"
 	"log"
@@ -19,9 +20,10 @@ func main() {
 	var deleter deleting.Service
 
 	db, _ := database.NewStorage()
+	cch, _ := cache.NewStorage()
 
-	adder = adding.NewService(db)
-	lister = listing.NewService(db)
+	adder = adding.NewService(db, cch)
+	lister = listing.NewService(db, cch)
 	updater = updating.NewService(db)
 	deleter = deleting.NewService(db)
 

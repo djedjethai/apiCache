@@ -2,6 +2,7 @@ package adding
 
 import (
 	"errors"
+	// "fmt"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
 	"time"
 )
@@ -21,14 +22,20 @@ type Service interface {
 
 type RepoDb interface {
 	AddBeer(database.Beer) (string, error)
+	GetBeersId() ([]database.Beer, error)
+}
+
+type Cache interface {
+	DeleteCache([]database.Beer) error
 }
 
 type service struct {
 	rdb RepoDb
+	cch Cache
 }
 
-func NewService(rdb RepoDb) Service {
-	return &service{rdb}
+func NewService(rdb RepoDb, cch Cache) Service {
+	return &service{rdb, cch}
 }
 
 func (s *service) AddBeerS(beer Beer) (string, error) {
@@ -49,6 +56,9 @@ func (s *service) AddBeerS(beer Beer) (string, error) {
 	}
 
 	// delete cache
+	bids, _ := s.rdb.GetBeersId()
+	_ = s.cch.DeleteCache(bids)
+
 	return str, nil
 }
 
@@ -60,6 +70,5 @@ func (s *service) AddBeerSampleS(beers []Beer) error {
 		}
 	}
 
-	// delete cache
 	return nil
 }

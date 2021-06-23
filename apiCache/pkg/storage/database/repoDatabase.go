@@ -136,6 +136,30 @@ func (s *Storage) GetBeers() ([]Beer, error) {
 	return beers, nil
 }
 
+func (s *Storage) GetBeersId() ([]Beer, error) {
+	var beersId []Beer
+
+	results, err := s.db.Query("SELECT beer_id FROM beer")
+	if err != nil {
+		// fmt.Println("allllooo")
+		return beersId, err
+	}
+
+	for results.Next() {
+		var b Beer
+		err := results.Scan(
+			&b.ID,
+		)
+		if err != nil {
+			return beersId, err
+		}
+
+		beersId = append(beersId, b)
+	}
+
+	return beersId, nil
+}
+
 func (s *Storage) GetBeer(bid int) (Beer, error) {
 	var b Beer
 

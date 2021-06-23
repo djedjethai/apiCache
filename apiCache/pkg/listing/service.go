@@ -1,9 +1,12 @@
 package listing
 
 import (
+	// "encoding/json"
 	"errors"
-	// "fmt"
+	"fmt"
+	"github.com/djedjethai/apiCache/pkg/storage/cache"
 	"github.com/djedjethai/apiCache/pkg/storage/database"
+	"strconv"
 )
 
 var ErrServer = errors.New("Server error")
@@ -18,12 +21,18 @@ type RepoDb interface {
 	GetBeer(int) (database.Beer, error)
 }
 
-type service struct {
-	rdb RepoDb
+type Cache interface {
+	CacheBeers(cache.Beer) error
+	GetCacheBeers() ([]cache.Beer, error)
 }
 
-func NewService(rdb RepoDb) Service {
-	return &service{rdb}
+type service struct {
+	rdb RepoDb
+	cch Cache
+}
+
+func NewService(rdb RepoDb, cch Cache) Service {
+	return &service{rdb, cch}
 }
 
 func (s *service) GetBeerS(id int) (Beer, error) {
@@ -47,6 +56,30 @@ func (s *service) GetBeerS(id int) (Beer, error) {
 func (s *service) GetBeersS() ([]Beer, error) {
 	var beers []Beer
 
+	// get beers from cache
+	listBeers, _ := s.cch.GetCacheBeers()
+
+	fmt.Printf("nbr from cache: %v", len(listBeers))
+	if len(listBeers) > 0 {
+		fmt.Println("from cache")
+		for _, beer := range listBeers {
+			id, _ := strconv.Atoi(beer.ID)
+			b := Beer{
+				ID:        id,
+				Name:      beer.Name,
+				Brewery:   beer.Brewery,
+				Abv:       beer.Abv,
+				ShortDesc: beer.ShortDesc,
+				Created:   beer.Created,
+			}
+
+			beers = append(beers, b)
+		}
+
+		return beers, nil
+	}
+
+	// if no cache
 	beersDb, err := s.rdb.GetBeers()
 	if err != nil {
 		return beers, err
@@ -63,6 +96,18 @@ func (s *service) GetBeersS() ([]Beer, error) {
 		}
 
 		beers = append(beers, b)
+
+		id := strconv.Itoa(b.ID)
+		bcch := cache.Beer{
+			ID:        id,
+			Name:      b.Name,
+			Brewery:   b.Brewery,
+			Abv:       b.Abv,
+			ShortDesc: b.ShortDesc,
+			Created:   b.Created,
+		}
+
+		_ = s.cch.CacheBeers(bcch)
 	}
 
 	return beers, nil
