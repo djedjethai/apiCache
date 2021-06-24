@@ -6,12 +6,13 @@ import (
 	"github.com/djedjethai/apiCache/pkg/deleting"
 	"github.com/djedjethai/apiCache/pkg/listing"
 	"github.com/djedjethai/apiCache/pkg/updating"
+	"github.com/djedjethai/apiCache/pkg/reviewing"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
 )
 
-func Handler(a adding.Service, l listing.Service, u updating.Service, d deleting.Service) http.Handler {
+func Handler(a adding.Service, l listing.Service, u updating.Service, d deleting.Service, r reviewing.Service) http.Handler {
 	router := httprouter.New()
 
 	router.GET("/beers", GetAllBeersR(l))
@@ -19,9 +20,12 @@ func Handler(a adding.Service, l listing.Service, u updating.Service, d deleting
 	router.POST("/beer", PostBeerR(a))
 	router.POST("/beer/update", PostBeerUpdateR(u))
 	router.DELETE("/beer/:id", DeleteBeerR(d))
+	router.POST("/review/:id", PostReview(r))
 
 	return router
 }
+
+func PostReview(r reviewing.Service) func(...)
 
 func DeleteBeerR(d deleting.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

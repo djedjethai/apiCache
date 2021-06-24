@@ -42,7 +42,7 @@ func NewStorage() (*Storage, error) {
 		return nil, err
 	}
 
-	query := `CREATE TABLE IF NOT EXISTS beer(beer_id int primary key auto_increment, beer_name VARCHAR(20), beer_brewery VARCHAR(20), beer_abv FLOAT(25), beer_shortdesc text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP)`
+	query := `CREATE TABLE IF NOT EXISTS beer(beer_id int primary key auto_increment, beer_name VARCHAR(20), beer_brewery VARCHAR(20), beer_abv FLOAT(25), beer_shortdesc text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS review(review_id int primary key auto_increment, beer_id int, first_name VARCHAR(20), last_name VARCHAR(20), score int, text_review text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP);`
 
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
@@ -62,22 +62,74 @@ func NewStorage() (*Storage, error) {
 	return s, nil
 }
 
+func (s *Storage) AddReview(r Review) (string, error) {
+
+	query := "INSERT INTO review(beer_id, first_name, last_name, score, text_review) VALUES (?, ?, ?, ?, ?)"
+
+	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+
+	stmt, err := s.db.PrepareContext(ctx, query)
+	if err != nil {
+		log.Printf("Error %s when preparing adding review SQL statement", err)
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, r.BeerID, r.FirstName, r.LastName, r.Score, r.Text)
+	if err != nil {
+		log.Printf("Error %s when inserting row into review table", err)
+	}
+
+	rows, _ := res.RowsAffected()
+	revID, _ := res.LastInsertId()
+
+	log.Printf("number roes affected: %v", rows)
+
+	// reviewId is type int64 do convert it to string then to int
+	return strconv.Itoa(int(revID)), nil
+}
+
+func (s *Storage) GetReviews(bid int) ([]Review, error) {
+	var revs []Review
+
+	results, err := s.db.Query("SELECT review_id, beer_id, first_name, last_name, score, text_review, created_at WHERE beer_id = ?", bid)
+	if err != nil {
+		return revs, err
+	}
+
+	for results.Next() {
+		var r Review
+		err := results.Scan(
+			&r.ID,
+			&r.BeerID,
+			&r.FirstName,
+			&r.LastName,
+			&r.Score,
+			&r.Text,
+			&r.Created,
+		)
+		if err != nil {
+			return revs, err
+		}
+
+		revs = append(revs, r)
+	}
+
+	return revs, nil
+}
+
 func (s *Storage) AddBeer(b Beer) (string, error) {
 
 	query := "INSERT INTO beer(beer_name, beer_brewery, beer_abv, beer_shortdesc) VALUES (?, ?, ?, ?)"
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
-	fmt.Println("state1")
-
 	stmt, err := s.db.PrepareContext(ctx, query)
 	if err != nil {
-		log.Printf("Error %s when preparing SQL statement", err)
+		log.Printf("Error %s when preparing adding beer SQL statement", err)
 		return "", err
 	}
 	defer stmt.Close()
-
-	fmt.Println("bf exec the stmt")
 
 	res, err := stmt.ExecContext(ctx, b.Name, b.Brewery, b.Abv, b.ShortDesc)
 	if err != nil {

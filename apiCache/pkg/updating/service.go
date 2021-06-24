@@ -16,14 +16,20 @@ type Service interface {
 type RepoDb interface {
 	BeerUpdate(database.Beer) error
 	GetBeer(int) (database.Beer, error)
+	GetBeersId() ([]database.Beer, error)
+}
+
+type Cache interface {
+	DeleteCache([]database.Beer) error
 }
 
 type service struct {
 	rdb RepoDb
+	cch Cache
 }
 
-func NewService(rdb RepoDb) Service {
-	return &service{rdb}
+func NewService(rdb RepoDb, cch Cache) Service {
+	return &service{rdb, cch}
 }
 
 func (s *service) BeerUpdateS(beer Beer) error {
@@ -44,6 +50,10 @@ func (s *service) BeerUpdateS(beer Beer) error {
 	if err := s.rdb.BeerUpdate(b); err != nil {
 		return err
 	}
+
+	// delete cache
+	beersId, _ := s.rdb.GetBeersId()
+	_ = s.cch.DeleteCache(beersId)
 
 	return nil
 }
