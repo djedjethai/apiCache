@@ -14,11 +14,13 @@ var ErrServer = errors.New("Server error")
 type Service interface {
 	GetBeersS() ([]Beer, error)
 	GetBeerS(int) (Beer, error)
+	GetReviewsS(int) ([]Review, error)
 }
 
 type RepoDb interface {
 	GetBeers() ([]database.Beer, error)
 	GetBeer(int) (database.Beer, error)
+	GetReviews(int) ([]database.Review, error)
 }
 
 type Cache interface {
@@ -33,6 +35,31 @@ type service struct {
 
 func NewService(rdb RepoDb, cch Cache) Service {
 	return &service{rdb, cch}
+}
+
+func (s *service) GetReviewsS(bid int) ([]Review, error) {
+	var revs []Review
+
+	revFromDb, err := s.rdb.GetReviews(bid)
+	if err != nil {
+		return revs, err
+	}
+
+	for i := range revFromDb {
+		rev := Review{
+			ID:        revFromDb[i].ID,
+			BeerID:    revFromDb[i].BeerID,
+			FirstName: revFromDb[i].FirstName,
+			LastName:  revFromDb[i].LastName,
+			Score:     revFromDb[i].Score,
+			Text:      revFromDb[i].Text,
+			Created:   revFromDb[i].Created,
+		}
+
+		revs = append(revs, rev)
+	}
+
+	return revs, nil
 }
 
 func (s *service) GetBeerS(id int) (Beer, error) {

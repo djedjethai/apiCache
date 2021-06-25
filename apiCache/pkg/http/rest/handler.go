@@ -5,8 +5,8 @@ import (
 	"github.com/djedjethai/apiCache/pkg/adding"
 	"github.com/djedjethai/apiCache/pkg/deleting"
 	"github.com/djedjethai/apiCache/pkg/listing"
-	"github.com/djedjethai/apiCache/pkg/updating"
 	"github.com/djedjethai/apiCache/pkg/reviewing"
+	"github.com/djedjethai/apiCache/pkg/updating"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
@@ -20,12 +20,48 @@ func Handler(a adding.Service, l listing.Service, u updating.Service, d deleting
 	router.POST("/beer", PostBeerR(a))
 	router.POST("/beer/update", PostBeerUpdateR(u))
 	router.DELETE("/beer/:id", DeleteBeerR(d))
-	router.POST("/review/:id", PostReview(r))
+	router.POST("/review", PostReviewR(r))
+
+	router.GET("/review/:id", GetReviewsR(l))
 
 	return router
 }
 
-func PostReview(r reviewing.Service) func(...)
+func GetReviewsR(l listing.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		bid, err := strconv.Atoi(p.ByName("id"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		revsFromSv, err := l.GetReviewsS(bid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-type", "application/json")
+		json.NewEncoder(w).Encode(revsFromSv)
+	}
+}
+
+func PostReviewR(rs reviewing.Service) func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		decoder := json.NewDecoder(r.Body)
+
+		var rev reviewing.Review
+		if err := decoder.Decode(&rev); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		str, err := rs.AddReviewS(rev)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-type", "application/json")
+		json.NewEncoder(w).Encode(str)
+	}
+}
 
 func DeleteBeerR(d deleting.Service) func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

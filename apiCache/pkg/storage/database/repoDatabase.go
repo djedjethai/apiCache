@@ -42,21 +42,30 @@ func NewStorage() (*Storage, error) {
 		return nil, err
 	}
 
-	query := `CREATE TABLE IF NOT EXISTS beer(beer_id int primary key auto_increment, beer_name VARCHAR(20), beer_brewery VARCHAR(20), beer_abv FLOAT(25), beer_shortdesc text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS review(review_id int primary key auto_increment, beer_id int, first_name VARCHAR(20), last_name VARCHAR(20), score int, text_review text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP);`
-
+	query := `CREATE TABLE IF NOT EXISTS beer(beer_id int primary key auto_increment, beer_name VARCHAR(20), beer_brewery VARCHAR(20), beer_abv FLOAT(25), beer_shortdesc text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP);`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
-
 	res, err := s.db.ExecContext(ctx, query)
 	if err != nil {
 		log.Printf("Error %s when creating product table", err)
 	}
-
 	rows, err := res.RowsAffected()
 	if err != nil {
 		log.Printf("Error %s when getting rows affected", err)
 	}
+	fmt.Printf("table beer created: %v", rows)
 
+	query = `CREATE TABLE IF NOT EXISTS review(review_id int primary key auto_increment, beer_id int, first_name VARCHAR(20), last_name VARCHAR(20), score int, text_review text, created_at datetime default CURRENT_TIMESTAMP, updated_at datetime default CURRENT_TIMESTAMP);`
+	ctx, cancelfunc = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+	res, err = s.db.ExecContext(ctx, query)
+	if err != nil {
+		log.Printf("Error %s when creating product table", err)
+	}
+	rows, err = res.RowsAffected()
+	if err != nil {
+		log.Printf("Error %s when getting rows affected", err)
+	}
 	fmt.Printf("table beer created: %v", rows)
 
 	return s, nil
