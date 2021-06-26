@@ -10,7 +10,7 @@ type Review struct {
 	BeerID    int
 	FirstName string
 	LastName  string
-	Score     int
+	Score     float32
 	Text      string
 	Created   time.Time
 }
