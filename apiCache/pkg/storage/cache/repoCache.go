@@ -118,6 +118,14 @@ func (s *Storage) DeleteCache(ids []database.Beer) error {
 	return nil
 }
 
-// func (s *Storage) DeleteCacheReview(rid int) error {
+func (s *Storage) DeleteCacheReview(revs []database.Review) error {
+	// itere and delete each
+	for i := range revs {
+		bid := strconv.Itoa(revs[i].BeerID)
+		if err := s.cch.Delete(CollectionReview, bid); err != nil {
+			return err
+		}
+	}
 
-// }
+	return nil
+}

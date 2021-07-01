@@ -62,6 +62,7 @@ func (s *service) GetReviewsS(bid int) ([]Review, error) {
 			revs = append(revs, revToList)
 		}
 
+		fmt.Println("reviews from cache")
 		return revs, nil
 	}
 
@@ -126,14 +127,12 @@ func (s *service) GetBeerReviewsS(id int) (BeerReviews, error) {
 	if err != nil {
 		return brvs, err
 	}
-	fmt.Printf("beeeer: %v", b)
 
 	var revs []Review
 	revs, err = s.GetReviewsS(b.ID)
 	if err != nil {
 		return brvs, err
 	}
-	fmt.Printf("reviews: %v", revs)
 
 	brvs = BeerReviews{
 		Beer:    b,
@@ -149,9 +148,7 @@ func (s *service) GetBeersS() ([]Beer, error) {
 	// get beers from cache
 	listBeers, _ := s.cch.GetCacheBeers()
 
-	fmt.Printf("nbr from cache: %v", len(listBeers))
 	if len(listBeers) > 0 {
-		fmt.Println("from cache")
 		for _, beer := range listBeers {
 			id, _ := strconv.Atoi(beer.ID)
 			b := Beer{
@@ -166,6 +163,7 @@ func (s *service) GetBeersS() ([]Beer, error) {
 			beers = append(beers, b)
 		}
 
+		fmt.Println("get beers from cache")
 		return beers, nil
 	}
 
