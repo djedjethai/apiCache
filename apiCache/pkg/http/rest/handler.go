@@ -85,7 +85,7 @@ func GetBeerR(l listing.Service) func(w http.ResponseWriter, r *http.Request, p 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		beerParam, _ := strconv.Atoi(p.ByName("id"))
 
-		beer, err := l.GetBeerS(beerParam)
+		beer, err := l.GetBeerReviewsS(beerParam)
 		if err != nil {
 			http.Error(w, "Beer unfound", http.StatusNotFound)
 		}

@@ -13,7 +13,8 @@ import (
 const (
 	dir = "/data/"
 
-	CollectionBeer = "beers"
+	CollectionBeer   = "beers"
+	CollectionReview = "review"
 )
 
 type RepoDb interface {
@@ -48,6 +49,45 @@ func (s *Storage) CacheBeers(b Beer) error {
 	return nil
 }
 
+func (s *Storage) CacheReview(r Review) error {
+	if err := s.cch.Write(CollectionReview, r.ID, r); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) GetCacheBeer(bid int) (Beer, error) {
+	var beer Beer
+	id := strconv.Itoa(bid)
+	if err := s.cch.Read(CollectionBeer, id, &beer); err != nil {
+		return beer, err
+	}
+
+	return beer, nil
+}
+
+func (s *Storage) GetCacheReviews(bid int) ([]Review, error) {
+	var revs []Review
+	listReviews, err := s.cch.ReadAll(CollectionReview)
+	if err != nil {
+		return revs, err
+	}
+
+	// parse the reviews and match b id
+	beer_id := strconv.Itoa(bid)
+	for _, rev := range listReviews {
+		var review Review
+		_ = json.Unmarshal([]byte(rev), &review)
+
+		if review.BeerID == beer_id {
+			revs = append(revs, review)
+		}
+	}
+
+	return revs, nil
+}
+
 func (s *Storage) GetCacheBeers() ([]Beer, error) {
 	var listBeers []Beer
 
@@ -77,3 +117,7 @@ func (s *Storage) DeleteCache(ids []database.Beer) error {
 
 	return nil
 }
+
+// func (s *Storage) DeleteCacheReview(rid int) error {
+
+// }

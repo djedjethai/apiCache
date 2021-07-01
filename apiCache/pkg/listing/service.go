@@ -15,6 +15,7 @@ type Service interface {
 	GetBeersS() ([]Beer, error)
 	GetBeerS(int) (Beer, error)
 	GetReviewsS(int) ([]Review, error)
+	GetBeerReviewsS(int) (BeerReviews, error)
 }
 
 type RepoDb interface {
@@ -25,7 +26,9 @@ type RepoDb interface {
 
 type Cache interface {
 	CacheBeers(cache.Beer) error
+	CacheReview(cache.Review) error
 	GetCacheBeers() ([]cache.Beer, error)
+	GetCacheReviews(int) ([]cache.Review, error)
 }
 
 type service struct {
@@ -40,6 +43,29 @@ func NewService(rdb RepoDb, cch Cache) Service {
 func (s *service) GetReviewsS(bid int) ([]Review, error) {
 	var revs []Review
 
+	// if cache
+	revFromCch, _ := s.cch.GetCacheReviews(bid)
+	if len(revFromCch) > 0 {
+		for i := range revFromCch {
+			id, _ := strconv.Atoi(revFromCch[i].ID)
+			beerid, _ := strconv.Atoi(revFromCch[i].BeerID)
+			revToList := Review{
+				ID:        id,
+				BeerID:    beerid,
+				FirstName: revFromCch[i].FirstName,
+				LastName:  revFromCch[i].LastName,
+				Score:     revFromCch[i].Score,
+				Text:      revFromCch[i].Text,
+				Created:   revFromCch[i].Created,
+			}
+
+			revs = append(revs, revToList)
+		}
+
+		return revs, nil
+	}
+
+	// if no cache
 	revFromDb, err := s.rdb.GetReviews(bid)
 	if err != nil {
 		return revs, err
@@ -55,6 +81,18 @@ func (s *service) GetReviewsS(bid int) ([]Review, error) {
 			Text:      revFromDb[i].Text,
 			Created:   revFromDb[i].Created,
 		}
+
+		revForCch := cache.Review{
+			ID:        strconv.Itoa(revFromDb[i].ID),
+			BeerID:    strconv.Itoa(revFromDb[i].BeerID),
+			FirstName: revFromDb[i].FirstName,
+			LastName:  revFromDb[i].LastName,
+			Score:     revFromDb[i].Score,
+			Text:      revFromDb[i].Text,
+			Created:   revFromDb[i].Created,
+		}
+
+		_ = s.cch.CacheReview(revForCch)
 
 		revs = append(revs, rev)
 	}
@@ -78,6 +116,31 @@ func (s *service) GetBeerS(id int) (Beer, error) {
 	b.Created = beerFromDB.Created
 
 	return b, nil
+}
+
+func (s *service) GetBeerReviewsS(id int) (BeerReviews, error) {
+
+	var brvs BeerReviews
+
+	b, err := s.GetBeerS(id)
+	if err != nil {
+		return brvs, err
+	}
+	fmt.Printf("beeeer: %v", b)
+
+	var revs []Review
+	revs, err = s.GetReviewsS(b.ID)
+	if err != nil {
+		return brvs, err
+	}
+	fmt.Printf("reviews: %v", revs)
+
+	brvs = BeerReviews{
+		Beer:    b,
+		Reviews: revs,
+	}
+
+	return brvs, nil
 }
 
 func (s *service) GetBeersS() ([]Beer, error) {
